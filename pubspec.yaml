@@ -1,0 +1,35 @@
+name: cyber_vault
+description: "Offline-first, zero-knowledge personal vault for passwords, documents and notes."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.6.1
+
+  # Crypto (Argon2id, AES-256-GCM, HKDF) - pure Dart
+  cryptography: ^2.7.0
+
+  # Keystore / biometrics
+  flutter_secure_storage: ^10.0.0
+  local_auth: ^2.3.0
+
+  # Encrypted database (SQLCipher, AES-256)
+  sqflite_sqlcipher: ^3.4.0
+
+  # Files
+  path_provider: ^2.1.5
+  path: ^1.9.0
+  file_picker: ^10.3.0
+
+  # In-memory PDF rendering (PDFium) - never touches disk
+  pdfrx: ^2.2.20
+
+flutter:
+  uses-material-design: true
