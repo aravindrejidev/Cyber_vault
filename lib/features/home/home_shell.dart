@@ -4,6 +4,7 @@ import 'package:cyber_vault/features/documents/presentation/document_list_page.d
 import 'package:cyber_vault/features/notes/presentation/note_list_page.dart';
 import 'package:cyber_vault/features/passwords/presentation/password_list_page.dart';
 import 'package:cyber_vault/features/settings/presentation/settings_page.dart';
+import 'package:cyber_vault/features/update/presentation/update_coordinator.dart';
 import 'package:flutter/material.dart';
 
 class HomeShell extends StatefulWidget {
@@ -15,6 +16,17 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Look for a new release once per app start (after the vault is unlocked).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        UpdateCoordinator.runStartupCheck(context);
+      }
+    });
+  }
 
   static const List<Widget> _pages = <Widget>[
     PasswordListPage(),
