@@ -18,15 +18,33 @@ void reportUserActivity() {
   userActivity.value++;
 }
 
-/// Lets the app open system screens (e.g. the file picker) without the
-/// background timeout locking the vault in the meantime.
+/// Lets the app open system screens without the background timeout locking
+/// the vault in the meantime.
 class LockGuard {
   LockGuard._();
 
   static int _depth = 0;
+  static DateTime? _suspendedUntil;
 
-  static bool get isSuspended => _depth > 0;
+  static bool get isSuspended {
+    if (_depth > 0) return true;
+    final DateTime? until = _suspendedUntil;
+    return until != null && DateTime.now().isBefore(until);
+  }
 
+  /// For screens that give no Future back (the installer, system settings):
+  /// the background timeout is paused for [duration] or until the app returns.
+  static void suspendFor(Duration duration) {
+    _suspendedUntil = DateTime.now().add(duration);
+  }
+
+  static bool get hasTimedSuspension => _suspendedUntil != null;
+
+  static void clearTimedSuspension() {
+    _suspendedUntil = null;
+  }
+
+  /// For screens that give a Future back (the file picker).
   static Future<T> suspendWhile<T>(Future<T> Function() action) async {
     _depth++;
     try {
@@ -84,6 +102,17 @@ class _AutoLockScopeState extends ConsumerState<AutoLockScope>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.detached) {
       _lockNow();
+      return;
+    }
+    if (state == AppLifecycleState.resumed && LockGuard.hasTimedSuspension) {
+      // Back from the installer / system settings: normal rules apply again.
+      final bool withinWindow = LockGuard.isSuspended;
+      LockGuard.clearTimedSuspension();
+      if (withinWindow) {
+        _restartInactivityTimer();
+      } else {
+        _lockNow();
+      }
       return;
     }
     if (LockGuard.isSuspended) return;
