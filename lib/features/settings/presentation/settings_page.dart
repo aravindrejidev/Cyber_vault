@@ -1,8 +1,11 @@
 import 'package:cyber_vault/core/security/session.dart';
 import 'package:cyber_vault/core/theme/app_theme.dart';
+import 'package:cyber_vault/core/update/app_info.dart';
+import 'package:cyber_vault/core/update/update_service.dart';
 import 'package:cyber_vault/core/widgets/common_widgets.dart';
 import 'package:cyber_vault/features/auth/presentation/erase_vault_dialog.dart';
 import 'package:cyber_vault/features/settings/presentation/change_password_dialog.dart';
+import 'package:cyber_vault/features/update/presentation/update_coordinator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,7 +17,34 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
+  final UpdateService _updates = UpdateService();
   bool _biometricBusy = false;
+  bool _autoCheck = true;
+  bool _checking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUpdatePrefs();
+  }
+
+  Future<void> _loadUpdatePrefs() async {
+    final bool enabled = await _updates.isAutoCheckEnabled();
+    if (!mounted) return;
+    setState(() => _autoCheck = enabled);
+  }
+
+  Future<void> _toggleAutoCheck(bool value) async {
+    setState(() => _autoCheck = value);
+    await _updates.setAutoCheckEnabled(value);
+  }
+
+  Future<void> _checkNow() async {
+    if (_checking) return;
+    setState(() => _checking = true);
+    await UpdateCoordinator.runManualCheck(context);
+    if (mounted) setState(() => _checking = false);
+  }
 
   Future<void> _toggleBiometric(bool enable) async {
     setState(() => _biometricBusy = true);
@@ -93,6 +123,47 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ),
           ),
           const SizedBox(height: 20),
+          const _SectionLabel('Updates'),
+          NeonCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: <Widget>[
+                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: const Text('Version'),
+                  subtitle: Text(
+                    _updates.isConfigured
+                        ? 'v${AppInfo.version}'
+                        : 'v${AppInfo.version} (updates are off in this build)',
+                  ),
+                ),
+                const Divider(height: 1),
+                SwitchListTile(
+                  secondary: const Icon(Icons.system_update_alt),
+                  title: const Text('Check on startup'),
+                  subtitle: const Text(
+                    'Only asks GitHub whether a new release exists',
+                  ),
+                  value: _autoCheck,
+                  onChanged: _updates.isConfigured ? _toggleAutoCheck : null,
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: _checking
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh),
+                  title: const Text('Check for updates now'),
+                  enabled: _updates.isConfigured && !_checking,
+                  onTap: _checkNow,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
           const _SectionLabel('How your data is protected'),
           const NeonCard(
             child: Column(
@@ -125,6 +196,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 _InfoRow(
                   icon: Icons.content_paste,
                   text: 'Copied passwords are cleared from the clipboard after 30 s.',
+                ),
+                _InfoRow(
+                  icon: Icons.wifi_off_outlined,
+                  text: 'Your data never leaves the device. The network is used only to check and download app updates from GitHub.',
                 ),
               ],
             ),
