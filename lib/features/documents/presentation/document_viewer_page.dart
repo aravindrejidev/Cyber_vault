@@ -10,41 +10,66 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdfrx/pdfrx.dart'
     show PdfViewer, PdfViewerParams, PdfTextSelectionParams;
 
-/// Shows a document without ever writing decrypted data to disk:
+/// Shows the files of a document one at a time (previous / next buttons)
+/// without ever writing decrypted data to disk:
 ///  * the encrypted blob is decrypted into RAM,
 ///  * PDFs are rendered by PDFium straight from memory,
 ///  * images are decoded with Image.memory.
 /// The page closes itself the moment the app goes to the background, and wipes
-/// the decrypted bytes when it is disposed.
+/// the decrypted bytes when it is disposed or another file is shown.
 class DocumentViewerPage extends ConsumerStatefulWidget {
-  const DocumentViewerPage({super.key, required this.entry});
+  const DocumentViewerPage({
+    super.key,
+    required this.entry,
+    this.initialIndex = 0,
+  });
 
   final DocumentEntry entry;
+  final int initialIndex;
 
   @override
   ConsumerState<DocumentViewerPage> createState() => _DocumentViewerPageState();
 }
 
 class _DocumentViewerPageState extends ConsumerState<DocumentViewerPage> {
+  late int _index;
   Uint8List? _bytes;
   String? _error;
+  bool _loading = true;
+  int _loadToken = 0;
+
+  List<DocumentFile> get _files => widget.entry.files;
+  DocumentFile get _file => _files[_index];
 
   @override
   void initState() {
     super.initState();
+    final int last = _files.isEmpty ? 0 : _files.length - 1;
+    final int wanted = widget.initialIndex;
+    _index = wanted < 0 ? 0 : (wanted > last ? last : wanted);
     backgroundSignal.addListener(_onBackground);
-    _load();
+    if (_files.isEmpty) {
+      _loading = false;
+      _error = 'This document has no files.';
+    } else {
+      _load();
+    }
   }
 
   @override
   void dispose() {
     backgroundSignal.removeListener(_onBackground);
+    _loadToken++;
     CryptoService.wipe(_bytes);
     _bytes = null;
+    _dropImageCache();
+    super.dispose();
+  }
+
+  void _dropImageCache() {
     final ImageCache cache = PaintingBinding.instance.imageCache;
     cache.clear();
     cache.clearLiveImages();
-    super.dispose();
   }
 
   void _onBackground() {
@@ -56,20 +81,39 @@ class _DocumentViewerPageState extends ConsumerState<DocumentViewerPage> {
   }
 
   Future<void> _load() async {
+    final int token = ++_loadToken;
     try {
       final Uint8List data =
-          await ref.read(documentRepositoryProvider).readBytes(widget.entry);
-      if (!mounted) {
+          await ref.read(documentRepositoryProvider).readFileBytes(_file);
+      if (!mounted || token != _loadToken) {
         CryptoService.wipe(data);
         return;
       }
-      setState(() => _bytes = data);
+      setState(() {
+        _bytes = data;
+        _loading = false;
+      });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || token != _loadToken) return;
       setState(() {
         _error = 'Could not decrypt this file. It may be damaged.';
+        _loading = false;
       });
     }
+  }
+
+  void _go(int index) {
+    if (index < 0 || index >= _files.length || index == _index) return;
+    reportUserActivity();
+    CryptoService.wipe(_bytes);
+    _dropImageCache();
+    setState(() {
+      _index = index;
+      _bytes = null;
+      _error = null;
+      _loading = true;
+    });
+    _load();
   }
 
   Widget _buildBody() {
@@ -88,31 +132,77 @@ class _DocumentViewerPageState extends ConsumerState<DocumentViewerPage> {
     }
 
     final Uint8List? bytes = _bytes;
-    if (bytes == null) {
+    if (_loading || bytes == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (widget.entry.kind == DocumentKind.pdf) {
-      return PdfViewer.data(
-        bytes,
-        sourceName: widget.entry.id,
-        params: PdfViewerParams(
-          // No text selection: it would allow copying content to the clipboard.
-          textSelectionParams: PdfTextSelectionParams(enabled: false),
+    final DocumentFile file = _file;
+    if (file.kind == DocumentKind.pdf) {
+      return KeyedSubtree(
+        key: ValueKey<String>(file.id),
+        child: PdfViewer.data(
+          bytes,
+          sourceName: file.id,
+          params: PdfViewerParams(
+            // No text selection: it would allow copying content to the clipboard.
+            textSelectionParams: PdfTextSelectionParams(enabled: false),
+          ),
         ),
       );
     }
 
-    return InteractiveViewer(
-      minScale: 0.5,
-      maxScale: 6,
-      child: Center(
-        child: Image.memory(
-          bytes,
-          fit: BoxFit.contain,
-          gaplessPlayback: true,
-          errorBuilder: (BuildContext c, Object e, StackTrace? s) =>
-              const Text('This image cannot be displayed.'),
+    return KeyedSubtree(
+      key: ValueKey<String>(file.id),
+      child: InteractiveViewer(
+        minScale: 0.5,
+        maxScale: 6,
+        child: Center(
+          child: Image.memory(
+            bytes,
+            fit: BoxFit.contain,
+            gaplessPlayback: true,
+            errorBuilder: (BuildContext c, Object e, StackTrace? s) =>
+                const Text('This image cannot be displayed.'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget? _buildNavigationBar() {
+    if (_files.length < 2) return null;
+    return Container(
+      color: AppColors.surface,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              IconButton(
+                tooltip: 'Previous',
+                icon: const Icon(Icons.chevron_left, size: 32),
+                onPressed: _index > 0 ? () => _go(_index - 1) : null,
+              ),
+              Text(
+                '${_index + 1} / ${_files.length}',
+                style: const TextStyle(
+                  color: AppColors.neonCyan,
+                  fontFamily: 'monospace',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              IconButton(
+                tooltip: 'Next',
+                icon: const Icon(Icons.chevron_right, size: 32),
+                onPressed: _index < _files.length - 1
+                    ? () => _go(_index + 1)
+                    : null,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -120,11 +210,11 @@ class _DocumentViewerPageState extends ConsumerState<DocumentViewerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final String title = _files.isEmpty ? widget.entry.name : _file.name;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.entry.name, overflow: TextOverflow.ellipsis),
-      ),
+      appBar: AppBar(title: Text(title, overflow: TextOverflow.ellipsis)),
       body: _buildBody(),
+      bottomNavigationBar: _buildNavigationBar(),
     );
   }
 }
