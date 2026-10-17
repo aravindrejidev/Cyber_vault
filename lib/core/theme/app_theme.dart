@@ -1,23 +1,73 @@
 import 'package:flutter/material.dart';
 
-/// Colour tokens for the minimalist dark-neon "Cyber Vault" look.
+/// Cyber-brutalist design tokens: pitch-black background, hard white lines,
+/// one volt-lime accent, hot magenta and red for emphasis.
+/// No gradients, no blur, no rounded corners.
 class AppColors {
   AppColors._();
 
-  static const Color background = Color(0xFF070A10);
-  static const Color surface = Color(0xFF0D121C);
-  static const Color surfaceHigh = Color(0xFF141C2B);
-  static const Color border = Color(0xFF1F2B40);
+  /// Pitch black, the background of the whole app.
+  static const Color black = Color(0xFF000000);
+  static const Color panel = Color(0xFF0A0A0A);
+  static const Color panelHigh = Color(0xFF161616);
 
-  static const Color neonCyan = Color(0xFF00E5FF);
-  static const Color neonGreen = Color(0xFF39FF88);
-  static const Color neonMagenta = Color(0xFFFF3DCB);
+  /// Hard white: text and strong borders.
+  static const Color ink = Color(0xFFFFFFFF);
+  static const Color muted = Color(0xFF8E8E8E);
+  static const Color line = Color(0xFF2B2B2B);
 
-  static const Color danger = Color(0xFFFF4D6D);
-  static const Color warning = Color(0xFFFFC857);
+  /// Volt lime: the one accent colour.
+  static const Color accent = Color(0xFFCCFF00);
+  static const Color hot = Color(0xFFFF2E93);
+  static const Color danger = Color(0xFFFF3B30);
+  static const Color warn = Color(0xFFFFB800);
+}
 
-  static const Color text = Color(0xFFE8EEF8);
-  static const Color textMuted = Color(0xFF8A97AD);
+class AppStyle {
+  AppStyle._();
+
+  /// Monospace everywhere: terminal feel.
+  static const String font = 'monospace';
+  static const double stroke = 2;
+  static const double strokeHeavy = 3;
+  static const double shadowOffset = 4;
+
+  static const TextStyle label = TextStyle(
+    fontFamily: font,
+    fontSize: 12,
+    fontWeight: FontWeight.w800,
+    letterSpacing: 2,
+    color: AppColors.accent,
+  );
+
+  static const TextStyle heading = TextStyle(
+    fontFamily: font,
+    fontSize: 32,
+    fontWeight: FontWeight.w900,
+    height: 1.05,
+    color: AppColors.ink,
+  );
+
+  static const TextStyle button = TextStyle(
+    fontFamily: font,
+    fontSize: 14,
+    fontWeight: FontWeight.w800,
+    letterSpacing: 1.6,
+  );
+
+  static const TextStyle muted = TextStyle(
+    fontFamily: font,
+    fontSize: 13,
+    height: 1.4,
+    color: AppColors.muted,
+  );
+
+  /// Hard offset shadow (no blur): the signature of the style.
+  static List<BoxShadow> hardShadow(Color color, [double offset = shadowOffset]) {
+    return <BoxShadow>[
+      BoxShadow(color: color, offset: Offset(offset, offset), blurRadius: 0),
+    ];
+  }
 }
 
 class AppTheme {
@@ -25,25 +75,121 @@ class AppTheme {
 
   static ThemeData dark() {
     final ColorScheme scheme = ColorScheme.dark(
-      primary: AppColors.neonCyan,
-      onPrimary: const Color(0xFF00141A),
-      secondary: AppColors.neonGreen,
-      onSecondary: const Color(0xFF00170B),
-      tertiary: AppColors.neonMagenta,
-      onTertiary: const Color(0xFF1A0014),
-      surface: AppColors.surface,
-      onSurface: AppColors.text,
+      primary: AppColors.accent,
+      onPrimary: AppColors.black,
+      secondary: AppColors.hot,
+      onSecondary: AppColors.black,
+      tertiary: AppColors.warn,
+      onTertiary: AppColors.black,
       error: AppColors.danger,
-      onError: const Color(0xFF1A0006),
-      outline: AppColors.border,
-      inverseSurface: AppColors.surfaceHigh,
-      onInverseSurface: AppColors.text,
+      onError: AppColors.black,
+      surface: AppColors.black,
+      onSurface: AppColors.ink,
+      onSurfaceVariant: AppColors.muted,
+      outline: AppColors.ink,
+      outlineVariant: AppColors.line,
+      shadow: AppColors.black,
+      surfaceTint: Colors.transparent,
+      inverseSurface: AppColors.ink,
+      onInverseSurface: AppColors.black,
+      surfaceContainerLowest: AppColors.black,
+      surfaceContainerLow: AppColors.panel,
+      surfaceContainer: AppColors.panel,
+      surfaceContainerHigh: AppColors.panelHigh,
+      surfaceContainerHighest: AppColors.panelHigh,
     );
+
+    const RoundedRectangleBorder square = RoundedRectangleBorder();
 
     return ThemeData(
       colorScheme: scheme,
-      scaffoldBackgroundColor: AppColors.background,
-      dividerColor: AppColors.border,
+      fontFamily: AppStyle.font,
+      scaffoldBackgroundColor: AppColors.black,
+      canvasColor: AppColors.black,
+      dividerColor: AppColors.line,
+      dividerTheme: const DividerThemeData(
+        color: AppColors.line,
+        thickness: 2,
+        space: 2,
+      ),
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: const Color(0x22CCFF00),
+      iconTheme: const IconThemeData(color: AppColors.ink),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: AppColors.accent,
+        selectionColor: Color(0x66CCFF00),
+        selectionHandleColor: AppColors.accent,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.accent,
+          foregroundColor: AppColors.black,
+          disabledBackgroundColor: AppColors.panelHigh,
+          disabledForegroundColor: AppColors.muted,
+          shape: square,
+          textStyle: AppStyle.button,
+          minimumSize: const Size(64, 48),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.ink,
+          disabledForegroundColor: AppColors.muted,
+          side: const BorderSide(color: AppColors.ink, width: 2),
+          shape: square,
+          textStyle: AppStyle.button,
+          minimumSize: const Size(64, 48),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.accent,
+          shape: square,
+          textStyle: AppStyle.button,
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: AppColors.ink,
+          shape: square,
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.black,
+        modalBackgroundColor: AppColors.black,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: AppColors.ink, width: 3),
+        ),
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: AppColors.accent,
+        contentTextStyle: TextStyle(
+          fontFamily: AppStyle.font,
+          color: AppColors.black,
+          fontWeight: FontWeight.w800,
+          fontSize: 13,
+        ),
+        behavior: SnackBarBehavior.floating,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: AppColors.ink, width: 2),
+        ),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.accent,
+      ),
+      sliderTheme: const SliderThemeData(
+        activeTrackColor: AppColors.accent,
+        inactiveTrackColor: AppColors.line,
+        thumbColor: AppColors.ink,
+        overlayColor: Color(0x22CCFF00),
+        valueIndicatorColor: AppColors.accent,
+        valueIndicatorTextStyle: TextStyle(
+          color: AppColors.black,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }
