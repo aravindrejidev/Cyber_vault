@@ -42,14 +42,11 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
       _error = null;
     });
     try {
-      final bool ok =
-          await ref.read(sessionProvider.notifier).unlockWithBiometrics();
+      final bool ok = await ref.read(sessionProvider.notifier).unlockWithBiometrics();
       if (!ok && mounted) {
         setState(() {
           _busy = false;
-          if (!automatic) {
-            _error = 'Biometric unlock was cancelled or failed.';
-          }
+          if (!automatic) _error = 'Biometric unlock was cancelled or failed.';
         });
       }
     } catch (e) {
@@ -70,8 +67,7 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
       _error = null;
     });
     try {
-      final bool ok =
-          await ref.read(sessionProvider.notifier).unlockWithPassword(password);
+      final bool ok = await ref.read(sessionProvider.notifier).unlockWithPassword(password);
       if (!ok && mounted) {
         setState(() {
           _busy = false;
@@ -100,8 +96,7 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
   @override
   Widget build(BuildContext context) {
     final SessionState session = ref.watch(sessionProvider);
-    final bool canUseBiometrics =
-        session.biometricEnabled && session.biometricAvailable;
+    final bool canUseBiometrics = session.biometricEnabled && session.biometricAvailable;
 
     return Scaffold(
       body: SafeArea(
@@ -113,12 +108,13 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  const VaultBadge(
-                    title: 'Vault locked',
-                    subtitle: 'Enter your master password to continue.',
+                  const BrandHeader(
+                    kicker: 'locked',
+                    title: 'Enter\nmaster key',
+                    subtitle: 'Your vault is encrypted. Unlock it to continue.',
                     icon: Icons.lock_outline,
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 32),
                   VaultTextField(
                     controller: _controller,
                     label: 'Master password',
@@ -128,50 +124,41 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _unlock(),
                     suffix: IconButton(
-                      icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off,
-                      ),
+                      icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
                   if (_error != null) ...<Widget>[
-                    const SizedBox(height: 10),
-                    Text(
-                      _error!,
-                      style: const TextStyle(color: AppColors.danger),
-                    ),
-                  ],
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    height: 52,
-                    child: FilledButton(
-                      onPressed: _busy ? null : _unlock,
-                      child: _busy
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Unlock'),
-                    ),
-                  ),
-                  if (canUseBiometrics) ...<Widget>[
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 52,
-                      child: OutlinedButton.icon(
-                        onPressed: _busy ? null : () => _biometricUnlock(),
-                        icon: const Icon(Icons.fingerprint),
-                        label: const Text('Use biometrics'),
-                      ),
-                    ),
+                    const SizedBox(height: 16),
+                    ErrorBox(_error!),
                   ],
                   const SizedBox(height: 24),
-                  TextButton(
-                    onPressed: _busy ? null : _erase,
-                    child: const Text(
-                      'Forgot password? Erase vault',
-                      style: TextStyle(color: AppColors.textMuted),
+                  BrutalButton(
+                    label: _busy ? 'Working...' : 'Unlock',
+                    icon: _busy ? null : Icons.lock_open,
+                    onPressed: _busy ? null : _unlock,
+                  ),
+                  if (_busy) ...<Widget>[
+                    const SizedBox(height: 12),
+                    const BrutalProgressBar(),
+                  ],
+                  if (canUseBiometrics) ...<Widget>[
+                    const SizedBox(height: 14),
+                    BrutalButton(
+                      label: 'Use biometrics',
+                      icon: Icons.fingerprint,
+                      style: BrutalButtonStyle.outline,
+                      onPressed: _busy ? null : () => _biometricUnlock(),
+                    ),
+                  ],
+                  const SizedBox(height: 22),
+                  Center(
+                    child: TextButton(
+                      onPressed: _busy ? null : _erase,
+                      child: const Text(
+                        'FORGOT PASSWORD? ERASE VAULT',
+                        style: TextStyle(color: AppColors.muted, fontSize: 12),
+                      ),
                     ),
                   ),
                 ],
