@@ -28,11 +28,8 @@ class _NoteListPageState extends ConsumerState<NoteListPage> {
     final String q = _query.trim().toLowerCase();
     if (q.isEmpty) return items;
     return items
-        .where(
-          (NoteEntry n) =>
-              n.title.toLowerCase().contains(q) ||
-              n.body.toLowerCase().contains(q),
-        )
+        .where((NoteEntry n) =>
+            n.title.toLowerCase().contains(q) || n.body.toLowerCase().contains(q))
         .toList();
   }
 
@@ -44,13 +41,18 @@ class _NoteListPageState extends ConsumerState<NoteListPage> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<NoteEntry>> notes = ref.watch(noteListProvider);
+    final int? count = notes.maybeWhen(
+      data: (List<NoteEntry> items) => items.length,
+      orElse: () => null,
+    );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Secure notes')),
-      floatingActionButton: FloatingActionButton.extended(
+      appBar: BrutalAppBar(title: 'Notes', actions: <Widget>[CountTag(count)]),
+      floatingActionButton: BrutalButton(
+        label: 'New note',
+        icon: Icons.add,
+        expand: false,
         onPressed: () => _open(),
-        icon: const Icon(Icons.add),
-        label: const Text('New note'),
       ),
       body: Column(
         children: <Widget>[
@@ -62,13 +64,13 @@ class _NoteListPageState extends ConsumerState<NoteListPage> {
             child: notes.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (Object e, StackTrace st) =>
-                  Center(child: Text('Could not load notes: $e')),
+                  Center(child: ErrorBox('Could not load notes: $e')),
               data: (List<NoteEntry> items) {
                 if (items.isEmpty) {
                   return const EmptyState(
                     icon: Icons.sticky_note_2_outlined,
                     title: 'No notes yet',
-                    message: 'Tap New note to write something private.',
+                    message: 'Tap NEW NOTE to write something private.',
                   );
                 }
                 final List<NoteEntry> visible = _filter(items);
@@ -80,38 +82,23 @@ class _NoteListPageState extends ConsumerState<NoteListPage> {
                   );
                 }
                 return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 12, 110),
                   itemCount: visible.length,
-                  separatorBuilder: (BuildContext c, int i) =>
-                      const SizedBox(height: 8),
+                  separatorBuilder: (BuildContext c, int i) => const SizedBox(height: 10),
                   itemBuilder: (BuildContext c, int i) {
                     final NoteEntry note = visible[i];
-                    return NeonCard(
-                      padding: EdgeInsets.zero,
-                      child: ListTile(
-                        title: Text(
-                          note.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Text(
-                            _preview(note.body),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppColors.textMuted),
-                          ),
-                        ),
-                        trailing: Text(
+                    return BrutalTile(
+                      leading: const IconBox(icon: Icons.sticky_note_2_outlined),
+                      title: note.title,
+                      subtitle: _preview(note.body),
+                      trailing: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Text(
                           formatDate(note.updatedAt),
-                          style: const TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 12,
-                          ),
+                          style: const TextStyle(color: AppColors.muted, fontSize: 11),
                         ),
-                        onTap: () => _open(note),
                       ),
+                      onTap: () => _open(note),
                     );
                   },
                 );
