@@ -136,7 +136,6 @@ class _PasswordEditPageState extends ConsumerState<PasswordEditPage> {
     final String? value = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
       builder: (BuildContext ctx) => const PasswordGeneratorSheet(),
     );
     if (value == null || !mounted) return;
@@ -169,14 +168,14 @@ class _PasswordEditPageState extends ConsumerState<PasswordEditPage> {
         _confirmDiscard();
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(_isNew ? 'New password' : 'Edit password'),
+        appBar: BrutalAppBar(
+          title: _isNew ? 'New entry' : 'Edit entry',
           actions: <Widget>[
             IconButton(
               tooltip: _favorite ? 'Remove from favorites' : 'Add to favorites',
               icon: Icon(
                 _favorite ? Icons.star : Icons.star_border,
-                color: _favorite ? AppColors.warning : null,
+                color: _favorite ? AppColors.warn : null,
               ),
               onPressed: () => setState(() {
                 _favorite = !_favorite;
@@ -189,17 +188,6 @@ class _PasswordEditPageState extends ConsumerState<PasswordEditPage> {
                 icon: const Icon(Icons.delete_outline),
                 onPressed: _saving ? null : _delete,
               ),
-            IconButton(
-              tooltip: 'Save',
-              icon: _saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.check),
-              onPressed: _saving ? null : _save,
-            ),
           ],
         ),
         body: Form(
@@ -207,6 +195,7 @@ class _PasswordEditPageState extends ConsumerState<PasswordEditPage> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: <Widget>[
+              const SectionLabel('Credentials'),
               VaultTextField(
                 controller: _title,
                 label: 'Title',
@@ -217,7 +206,7 @@ class _PasswordEditPageState extends ConsumerState<PasswordEditPage> {
                 validator: (String? v) =>
                     (v == null || v.trim().isEmpty) ? 'Title is required' : null,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 20),
               VaultTextField(
                 controller: _username,
                 label: 'Username / email',
@@ -230,7 +219,7 @@ class _PasswordEditPageState extends ConsumerState<PasswordEditPage> {
                   onPressed: _copyUsername,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 20),
               VaultTextField(
                 controller: _password,
                 label: 'Password',
@@ -243,9 +232,7 @@ class _PasswordEditPageState extends ConsumerState<PasswordEditPage> {
                   children: <Widget>[
                     IconButton(
                       tooltip: _obscure ? 'Show' : 'Hide',
-                      icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off,
-                      ),
+                      icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                     IconButton(
@@ -255,20 +242,18 @@ class _PasswordEditPageState extends ConsumerState<PasswordEditPage> {
                     ),
                     IconButton(
                       tooltip: 'Generate',
-                      icon: const Icon(
-                        Icons.auto_awesome,
-                        color: AppColors.neonCyan,
-                      ),
+                      icon: const Icon(Icons.auto_awesome, color: AppColors.accent),
                       onPressed: _generate,
                     ),
                   ],
                 ),
               ),
               if (_password.text.isNotEmpty) ...<Widget>[
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 PasswordStrengthMeter(password: _password.text),
               ],
-              const SizedBox(height: 14),
+              const SizedBox(height: 28),
+              const SectionLabel('Extras'),
               VaultTextField(
                 controller: _url,
                 label: 'Website',
@@ -277,7 +262,7 @@ class _PasswordEditPageState extends ConsumerState<PasswordEditPage> {
                 keyboardType: TextInputType.url,
                 onChanged: (_) => _changed(),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 20),
               VaultTextField(
                 controller: _notes,
                 label: 'Notes',
@@ -286,7 +271,13 @@ class _PasswordEditPageState extends ConsumerState<PasswordEditPage> {
                 minLines: 3,
                 onChanged: (_) => _changed(),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
+              BrutalButton(
+                label: _saving ? 'Saving...' : 'Save entry',
+                icon: _saving ? null : Icons.check,
+                onPressed: _saving ? null : _save,
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
