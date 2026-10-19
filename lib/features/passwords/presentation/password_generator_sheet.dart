@@ -1,4 +1,5 @@
 import 'package:cyber_vault/core/theme/app_theme.dart';
+import 'package:cyber_vault/core/widgets/common_widgets.dart';
 import 'package:cyber_vault/features/passwords/domain/password_generator.dart';
 import 'package:flutter/material.dart';
 
@@ -40,32 +41,25 @@ class _PasswordGeneratorSheetState extends State<PasswordGeneratorSheet> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        padding: const EdgeInsets.fromLTRB(16, 20, 12, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text(
-              'Password generator',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceHigh,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.neonCyan.withAlpha(120)),
-              ),
+            const SectionLabel('Generator'),
+            BrutalCard(
+              shadowColor: AppColors.accent,
+              padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
               child: Row(
                 children: <Widget>[
                   Expanded(
                     child: SelectableText(
                       _value,
                       style: const TextStyle(
-                        fontFamily: 'monospace',
+                        fontFamily: AppStyle.font,
                         fontSize: 16,
-                        color: AppColors.neonGreen,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accent,
                       ),
                     ),
                   ),
@@ -77,10 +71,13 @@ class _PasswordGeneratorSheetState extends State<PasswordGeneratorSheet> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
               children: <Widget>[
-                Text('Length: ${_length.round()}'),
+                Text(
+                  'LENGTH ${_length.round()}',
+                  style: const TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.2),
+                ),
                 Expanded(
                   child: Slider(
                     value: _length,
@@ -96,49 +93,54 @@ class _PasswordGeneratorSheetState extends State<PasswordGeneratorSheet> {
                 ),
               ],
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Lowercase (a-z)'),
-              value: _lower,
-              onChanged: (bool v) {
-                _lower = v;
-                _regenerate();
-              },
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Uppercase (A-Z)'),
-              value: _upper,
-              onChanged: (bool v) {
-                _upper = v;
-                _regenerate();
-              },
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Digits (0-9)'),
-              value: _digits,
-              onChanged: (bool v) {
-                _digits = v;
-                _regenerate();
-              },
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Symbols (!@#...)'),
-              value: _symbols,
-              onChanged: (bool v) {
-                _symbols = v;
-                _regenerate();
-              },
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 50,
-              child: FilledButton(
-                onPressed: () => Navigator.of(context).pop(_value),
-                child: const Text('Use this password'),
+            const SizedBox(height: 6),
+            BrutalCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: <Widget>[
+                  BrutalSwitchTile(
+                    title: 'Lowercase (a-z)',
+                    value: _lower,
+                    onChanged: (bool v) {
+                      _lower = v;
+                      _regenerate();
+                    },
+                  ),
+                  const Divider(),
+                  BrutalSwitchTile(
+                    title: 'Uppercase (A-Z)',
+                    value: _upper,
+                    onChanged: (bool v) {
+                      _upper = v;
+                      _regenerate();
+                    },
+                  ),
+                  const Divider(),
+                  BrutalSwitchTile(
+                    title: 'Digits (0-9)',
+                    value: _digits,
+                    onChanged: (bool v) {
+                      _digits = v;
+                      _regenerate();
+                    },
+                  ),
+                  const Divider(),
+                  BrutalSwitchTile(
+                    title: 'Symbols (!@#...)',
+                    value: _symbols,
+                    onChanged: (bool v) {
+                      _symbols = v;
+                      _regenerate();
+                    },
+                  ),
+                ],
               ),
+            ),
+            const SizedBox(height: 14),
+            BrutalButton(
+              label: 'Use this password',
+              icon: Icons.check,
+              onPressed: () => Navigator.of(context).pop(_value),
             ),
           ],
         ),
