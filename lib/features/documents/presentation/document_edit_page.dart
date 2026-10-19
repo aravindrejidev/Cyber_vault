@@ -123,10 +123,7 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
       _dirty = true;
     });
     if (skipped > 0) {
-      showSnack(
-        context,
-        '$skipped file(s) skipped: only images and PDFs up to 25 MB each.',
-      );
+      showSnack(context, '$skipped file(s) skipped: only images and PDFs up to 25 MB each.');
     }
   }
 
@@ -154,9 +151,7 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
     FocusScope.of(context).unfocus();
     setState(() {
       _saving = true;
-      _progress = _pending.isEmpty
-          ? 'Saving...'
-          : 'Encrypting 1 / ${_pending.length}';
+      _progress = _pending.isEmpty ? 'Saving...' : 'Encrypting 1 / ${_pending.length}';
     });
     try {
       await ref.read(documentRepositoryProvider).save(
@@ -173,8 +168,7 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
               reportUserActivity();
               if (!mounted) return;
               setState(() {
-                _progress =
-                    done >= total ? 'Saving...' : 'Encrypting ${done + 1} / $total';
+                _progress = done >= total ? 'Saving...' : 'Encrypting ${done + 1} / $total';
               });
             },
           );
@@ -200,8 +194,7 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
     final bool confirmed = await confirmAction(
       context,
       title: 'Delete document?',
-      message:
-          'Delete "${existing.name}" and its ${existing.files.length} file(s) permanently?',
+      message: 'Delete "${existing.name}" and its ${existing.files.length} file(s) permanently?',
       confirmLabel: 'Delete',
       danger: true,
     );
@@ -256,8 +249,8 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
         _confirmDiscard();
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(_isNew ? 'Add document' : 'Document'),
+        appBar: BrutalAppBar(
+          title: _isNew ? 'Add document' : 'Document',
           actions: <Widget>[
             if (!_isNew)
               IconButton(
@@ -265,11 +258,6 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
                 icon: const Icon(Icons.delete_outline),
                 onPressed: _saving ? null : _delete,
               ),
-            IconButton(
-              tooltip: 'Save',
-              icon: const Icon(Icons.check),
-              onPressed: _saving ? null : _save,
-            ),
           ],
         ),
         body: Stack(
@@ -279,6 +267,7 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: <Widget>[
+                  const SectionLabel('Document'),
                   VaultTextField(
                     controller: _name,
                     label: 'Name',
@@ -286,24 +275,22 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
                     prefixIcon: Icons.badge_outlined,
                     textCapitalization: TextCapitalization.words,
                     onChanged: (_) => _changed(),
-                    validator: (String? v) => (v == null || v.trim().isEmpty)
-                        ? 'Name is required'
-                        : null,
+                    validator: (String? v) =>
+                        (v == null || v.trim().isEmpty) ? 'Name is required' : null,
                   ),
-                  const SizedBox(height: 22),
-                  const _SectionTitle('Files'),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 28),
+                  const SectionLabel('Files'),
                   if (!hasFiles)
                     const Padding(
-                      padding: EdgeInsets.only(bottom: 10),
+                      padding: EdgeInsets.only(bottom: 14),
                       child: Text(
                         'No files yet. You can add several photos or PDFs to one document.',
-                        style: TextStyle(color: AppColors.textMuted),
+                        style: AppStyle.muted,
                       ),
                     ),
                   for (final DocumentFile file in kept)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 10),
                       child: _FileRow(
                         name: file.name,
                         kind: file.kind,
@@ -318,11 +305,10 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
                     ),
                   for (final PendingFile file in _pending)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 10),
                       child: _FileRow(
                         name: file.name,
-                        kind: DocumentKind.fromFileName(file.name) ??
-                            DocumentKind.image,
+                        kind: DocumentKind.fromFileName(file.name) ?? DocumentKind.image,
                         size: file.size,
                         isNew: true,
                         onRemove: () => setState(() {
@@ -331,17 +317,15 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
                         }),
                       ),
                     ),
-                  SizedBox(
-                    height: 48,
-                    child: OutlinedButton.icon(
-                      onPressed: _saving ? null : _pickFiles,
-                      icon: const Icon(Icons.add_photo_alternate_outlined),
-                      label: const Text('Add images / PDF'),
-                    ),
+                  const SizedBox(height: 4),
+                  BrutalButton(
+                    label: 'Add images / PDF',
+                    icon: Icons.add_photo_alternate_outlined,
+                    style: BrutalButtonStyle.outline,
+                    onPressed: _saving ? null : _pickFiles,
                   ),
-                  const SizedBox(height: 22),
-                  const _SectionTitle('Details (optional)'),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 28),
+                  const SectionLabel('Details (optional)'),
                   VaultTextField(
                     controller: _userId,
                     label: 'User ID',
@@ -354,7 +338,7 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
                       onPressed: _copyUserId,
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 20),
                   VaultTextField(
                     controller: _url,
                     label: 'URL',
@@ -363,7 +347,7 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
                     keyboardType: TextInputType.url,
                     onChanged: (_) => _changed(),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 20),
                   VaultTextField(
                     controller: _password,
                     label: 'Password',
@@ -376,9 +360,7 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
                       children: <Widget>[
                         IconButton(
                           tooltip: _obscure ? 'Show' : 'Hide',
-                          icon: Icon(
-                            _obscure ? Icons.visibility : Icons.visibility_off,
-                          ),
+                          icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                         IconButton(
@@ -389,7 +371,7 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 20),
                   VaultTextField(
                     controller: _notes,
                     label: 'Note',
@@ -398,32 +380,19 @@ class _DocumentEditPageState extends ConsumerState<DocumentEditPage> {
                     minLines: 3,
                     onChanged: (_) => _changed(),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
+                  BrutalButton(
+                    label: _isNew ? 'Save document' : 'Save changes',
+                    icon: Icons.check,
+                    onPressed: _saving ? null : _save,
+                  ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
             if (_saving) Positioned.fill(child: _SavingOverlay(text: _progress)),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text.toUpperCase(),
-      style: const TextStyle(
-        color: AppColors.neonCyan,
-        fontSize: 12,
-        letterSpacing: 1.4,
-        fontWeight: FontWeight.w600,
       ),
     );
   }
@@ -448,40 +417,30 @@ class _FileRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String prefix = isNew ? 'NEW  -  ' : '';
-    return NeonCard(
-      padding: EdgeInsets.zero,
-      child: ListTile(
-        leading: Icon(
-          kind == DocumentKind.pdf
-              ? Icons.picture_as_pdf_outlined
-              : Icons.image_outlined,
-          color: AppColors.neonCyan,
-        ),
-        title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
-        subtitle: Text(
-          '$prefix${kind.label}  -  ${formatBytes(size)}',
-          style: TextStyle(
-            color: isNew ? AppColors.neonGreen : AppColors.textMuted,
-          ),
-        ),
-        onTap: onView,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            if (onView != null)
-              IconButton(
-                tooltip: 'Open',
-                icon: const Icon(Icons.visibility_outlined),
-                onPressed: onView,
-              ),
+    return BrutalTile(
+      leading: IconBox(
+        icon: kind == DocumentKind.pdf ? Icons.picture_as_pdf_outlined : Icons.image_outlined,
+        color: isNew ? AppColors.accent : AppColors.ink,
+      ),
+      title: name,
+      titleSuffix: isNew ? const StatusTag('new') : null,
+      subtitle: '${kind.label}  -  ${formatBytes(size)}',
+      onTap: onView,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (onView != null)
             IconButton(
-              tooltip: 'Remove',
-              icon: const Icon(Icons.close),
-              onPressed: onRemove,
+              tooltip: 'Open',
+              icon: const Icon(Icons.visibility_outlined),
+              onPressed: onView,
             ),
-          ],
-        ),
+          IconButton(
+            tooltip: 'Remove',
+            icon: const Icon(Icons.close),
+            onPressed: onRemove,
+          ),
+        ],
       ),
     );
   }
@@ -496,17 +455,25 @@ class _SavingOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        const ModalBarrier(dismissible: false, color: Color(0xB3000000)),
+        const ModalBarrier(dismissible: false, color: Color(0xD9000000)),
         Center(
-          child: NeonCard(
-            glow: true,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(text),
-              ],
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: BrutalCard(
+              shadowColor: AppColors.accent,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Text(
+                    text.toUpperCase(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.6),
+                  ),
+                  const SizedBox(height: 14),
+                  const BrutalProgressBar(),
+                ],
+              ),
             ),
           ),
         ),
