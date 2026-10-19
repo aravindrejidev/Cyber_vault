@@ -1,4 +1,3 @@
-import 'package:cyber_vault/core/theme/app_theme.dart';
 import 'package:cyber_vault/core/widgets/common_widgets.dart';
 import 'package:cyber_vault/features/documents/domain/document_entry.dart';
 import 'package:cyber_vault/features/documents/presentation/document_edit_page.dart';
@@ -28,8 +27,7 @@ class _DocumentListPageState extends ConsumerState<DocumentListPage> {
     final bool confirmed = await confirmAction(
       context,
       title: 'Delete document?',
-      message:
-          'Delete "${entry.name}" and its ${entry.files.length} file(s) permanently?',
+      message: 'Delete "${entry.name}" and its ${entry.files.length} file(s) permanently?',
       confirmLabel: 'Delete',
       danger: true,
     );
@@ -64,15 +62,19 @@ class _DocumentListPageState extends ConsumerState<DocumentListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<DocumentEntry>> documents =
-        ref.watch(documentListProvider);
+    final AsyncValue<List<DocumentEntry>> documents = ref.watch(documentListProvider);
+    final int? count = documents.maybeWhen(
+      data: (List<DocumentEntry> items) => items.length,
+      orElse: () => null,
+    );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Documents')),
-      floatingActionButton: FloatingActionButton.extended(
+      appBar: BrutalAppBar(title: 'Documents', actions: <Widget>[CountTag(count)]),
+      floatingActionButton: BrutalButton(
+        label: 'Add document',
+        icon: Icons.note_add_outlined,
+        expand: false,
         onPressed: () => _open(),
-        icon: const Icon(Icons.note_add_outlined),
-        label: const Text('Add document'),
       ),
       body: Column(
         children: <Widget>[
@@ -84,14 +86,14 @@ class _DocumentListPageState extends ConsumerState<DocumentListPage> {
             child: documents.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (Object e, StackTrace st) =>
-                  Center(child: Text('Could not load documents: $e')),
+                  Center(child: ErrorBox('Could not load documents: $e')),
               data: (List<DocumentEntry> items) {
                 if (items.isEmpty) {
                   return const EmptyState(
                     icon: Icons.folder_open_outlined,
                     title: 'No documents yet',
                     message:
-                        'Tap Add document to store IDs, certificates or statements. Every file is encrypted with AES-256 before it is saved.',
+                        'Tap ADD DOCUMENT to store IDs, certificates or statements. Every file is encrypted with AES-256 before it is saved.',
                   );
                 }
                 final List<DocumentEntry> visible = _filter(items);
@@ -103,34 +105,24 @@ class _DocumentListPageState extends ConsumerState<DocumentListPage> {
                   );
                 }
                 return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 12, 110),
                   itemCount: visible.length,
-                  separatorBuilder: (BuildContext c, int i) =>
-                      const SizedBox(height: 8),
+                  separatorBuilder: (BuildContext c, int i) => const SizedBox(height: 10),
                   itemBuilder: (BuildContext c, int i) {
                     final DocumentEntry entry = visible[i];
-                    final int count = entry.files.length;
-                    final String fileText = count == 1 ? '1 file' : '$count files';
-                    return NeonCard(
-                      padding: EdgeInsets.zero,
-                      child: ListTile(
-                        leading: Icon(_iconFor(entry), color: AppColors.neonCyan),
-                        title: Text(
-                          entry.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
+                    final int n = entry.files.length;
+                    final String fileText = n == 1 ? '1 file' : '$n files';
+                    return BrutalTile(
+                      leading: IconBox(icon: _iconFor(entry)),
+                      title: entry.name,
+                      subtitle:
                           '$fileText  -  ${formatBytes(entry.totalSize)}  -  ${formatDate(entry.createdAt)}',
-                          style: const TextStyle(color: AppColors.textMuted),
-                        ),
-                        trailing: IconButton(
-                          tooltip: 'Delete',
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () => _delete(entry),
-                        ),
-                        onTap: () => _open(entry),
+                      trailing: IconButton(
+                        tooltip: 'Delete',
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () => _delete(entry),
                       ),
+                      onTap: () => _open(entry),
                     );
                   },
                 );
