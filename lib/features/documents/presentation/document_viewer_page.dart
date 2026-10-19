@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:cyber_vault/core/crypto/crypto_service.dart';
 import 'package:cyber_vault/core/security/auto_lock.dart';
 import 'package:cyber_vault/core/theme/app_theme.dart';
+import 'package:cyber_vault/core/widgets/common_widgets.dart';
 import 'package:cyber_vault/features/documents/domain/document_entry.dart';
 import 'package:cyber_vault/features/documents/presentation/document_providers.dart';
 import 'package:flutter/material.dart';
@@ -83,8 +84,7 @@ class _DocumentViewerPageState extends ConsumerState<DocumentViewerPage> {
   Future<void> _load() async {
     final int token = ++_loadToken;
     try {
-      final Uint8List data =
-          await ref.read(documentRepositoryProvider).readFileBytes(_file);
+      final Uint8List data = await ref.read(documentRepositoryProvider).readFileBytes(_file);
       if (!mounted || token != _loadToken) {
         CryptoService.wipe(data);
         return;
@@ -120,14 +120,7 @@ class _DocumentViewerPageState extends ConsumerState<DocumentViewerPage> {
     final String? error = _error;
     if (error != null) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            error,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.danger),
-          ),
-        ),
+        child: Padding(padding: const EdgeInsets.all(24), child: ErrorBox(error)),
       );
     }
 
@@ -172,34 +165,35 @@ class _DocumentViewerPageState extends ConsumerState<DocumentViewerPage> {
   Widget? _buildNavigationBar() {
     if (_files.length < 2) return null;
     return Container(
-      color: AppColors.surface,
+      decoration: const BoxDecoration(
+        color: AppColors.black,
+        border: Border(top: BorderSide(color: AppColors.ink, width: 3)),
+      ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               IconButton(
                 tooltip: 'Previous',
-                icon: const Icon(Icons.chevron_left, size: 32),
+                icon: const Icon(Icons.chevron_left, size: 34),
                 onPressed: _index > 0 ? () => _go(_index - 1) : null,
               ),
               Text(
                 '${_index + 1} / ${_files.length}',
                 style: const TextStyle(
-                  color: AppColors.neonCyan,
-                  fontFamily: 'monospace',
+                  color: AppColors.accent,
                   fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2,
                 ),
               ),
               IconButton(
                 tooltip: 'Next',
-                icon: const Icon(Icons.chevron_right, size: 32),
-                onPressed: _index < _files.length - 1
-                    ? () => _go(_index + 1)
-                    : null,
+                icon: const Icon(Icons.chevron_right, size: 34),
+                onPressed: _index < _files.length - 1 ? () => _go(_index + 1) : null,
               ),
             ],
           ),
@@ -212,7 +206,7 @@ class _DocumentViewerPageState extends ConsumerState<DocumentViewerPage> {
   Widget build(BuildContext context) {
     final String title = _files.isEmpty ? widget.entry.name : _file.name;
     return Scaffold(
-      appBar: AppBar(title: Text(title, overflow: TextOverflow.ellipsis)),
+      appBar: BrutalAppBar(title: title),
       body: _buildBody(),
       bottomNavigationBar: _buildNavigationBar(),
     );
