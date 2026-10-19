@@ -1,4 +1,5 @@
 import 'package:cyber_vault/core/crypto/crypto_service.dart';
+import 'package:cyber_vault/core/theme/app_theme.dart';
 import 'package:cyber_vault/core/widgets/common_widgets.dart';
 import 'package:cyber_vault/features/notes/domain/note_entry.dart';
 import 'package:cyber_vault/features/notes/presentation/note_providers.dart';
@@ -104,8 +105,8 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
         _saveAndClose();
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(_isNew ? 'New note' : 'Edit note'),
+        appBar: BrutalAppBar(
+          title: _isNew ? 'New note' : 'Edit note',
           actions: <Widget>[
             if (!_isNew)
               IconButton(
@@ -115,13 +116,7 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
               ),
             IconButton(
               tooltip: 'Save',
-              icon: _saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.check),
+              icon: const Icon(Icons.check, color: AppColors.accent),
               onPressed: _saving ? null : _saveAndClose,
             ),
           ],
@@ -129,16 +124,17 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: <Widget>[
+            const SectionLabel('Note'),
             VaultTextField(
               controller: _title,
               label: 'Title',
               textCapitalization: TextCapitalization.sentences,
               onChanged: (_) => _changed(),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 20),
             VaultTextField(
               controller: _body,
-              label: 'Note',
+              label: 'Text',
               maxLines: null,
               minLines: 14,
               textCapitalization: TextCapitalization.sentences,
