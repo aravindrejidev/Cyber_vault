@@ -1,6 +1,5 @@
 import 'package:cyber_vault/core/security/auto_lock.dart';
 import 'package:cyber_vault/core/security/session.dart';
-import 'package:cyber_vault/core/theme/app_theme.dart';
 import 'package:cyber_vault/core/widgets/common_widgets.dart';
 import 'package:cyber_vault/features/auth/presentation/setup_page.dart';
 import 'package:cyber_vault/features/auth/presentation/unlock_page.dart';
@@ -45,18 +44,23 @@ class _SplashView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            VaultBadge(title: 'Cyber Vault'),
-            SizedBox(height: 28),
-            SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(strokeWidth: 2.5),
-            ),
-          ],
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              BrandHeader(
+                kicker: 'booting',
+                title: 'Cyber\nVault',
+                subtitle: 'Initializing secure storage...',
+              ),
+              SizedBox(height: 28),
+              BrutalProgressBar(),
+              SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
@@ -73,26 +77,22 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                const Icon(
-                  Icons.error_outline,
-                  size: 56,
-                  color: AppColors.danger,
-                ),
-                const SizedBox(height: 16),
-                Text(message, textAlign: TextAlign.center),
-                const SizedBox(height: 20),
-                FilledButton(
-                  onPressed: onRetry,
-                  child: const Text('Try again'),
-                ),
-              ],
-            ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              BrandHeader(
+                kicker: 'error',
+                title: 'Storage\nerror',
+                subtitle: message,
+                icon: Icons.error_outline,
+              ),
+              const SizedBox(height: 28),
+              BrutalButton(label: 'Try again', onPressed: onRetry),
+              const SizedBox(height: 16),
+            ],
           ),
         ),
       ),
