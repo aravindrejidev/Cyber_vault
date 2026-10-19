@@ -39,12 +39,10 @@ class _PasswordListPageState extends ConsumerState<PasswordListPage> {
     final String q = _query.trim().toLowerCase();
     if (q.isEmpty) return items;
     return items
-        .where(
-          (PasswordEntry e) =>
-              e.title.toLowerCase().contains(q) ||
-              e.username.toLowerCase().contains(q) ||
-              e.url.toLowerCase().contains(q),
-        )
+        .where((PasswordEntry e) =>
+            e.title.toLowerCase().contains(q) ||
+            e.username.toLowerCase().contains(q) ||
+            e.url.toLowerCase().contains(q))
         .toList();
   }
 
@@ -55,15 +53,19 @@ class _PasswordListPageState extends ConsumerState<PasswordListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<PasswordEntry>> entries =
-        ref.watch(passwordListProvider);
+    final AsyncValue<List<PasswordEntry>> entries = ref.watch(passwordListProvider);
+    final int? count = entries.maybeWhen(
+      data: (List<PasswordEntry> items) => items.length,
+      orElse: () => null,
+    );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Passwords')),
-      floatingActionButton: FloatingActionButton.extended(
+      appBar: BrutalAppBar(title: 'Passwords', actions: <Widget>[CountTag(count)]),
+      floatingActionButton: BrutalButton(
+        label: 'Add',
+        icon: Icons.add,
+        expand: false,
         onPressed: () => _open(),
-        icon: const Icon(Icons.add),
-        label: const Text('Add'),
       ),
       body: Column(
         children: <Widget>[
@@ -75,13 +77,13 @@ class _PasswordListPageState extends ConsumerState<PasswordListPage> {
             child: entries.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (Object e, StackTrace st) =>
-                  Center(child: Text('Could not load passwords: $e')),
+                  Center(child: ErrorBox('Could not load passwords: $e')),
               data: (List<PasswordEntry> items) {
                 if (items.isEmpty) {
                   return const EmptyState(
                     icon: Icons.key_outlined,
                     title: 'No passwords yet',
-                    message: 'Tap Add to store your first password.',
+                    message: 'Tap ADD to store your first password.',
                   );
                 }
                 final List<PasswordEntry> visible = _filter(items);
@@ -93,54 +95,24 @@ class _PasswordListPageState extends ConsumerState<PasswordListPage> {
                   );
                 }
                 return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 12, 110),
                   itemCount: visible.length,
-                  separatorBuilder: (BuildContext c, int i) =>
-                      const SizedBox(height: 8),
+                  separatorBuilder: (BuildContext c, int i) => const SizedBox(height: 10),
                   itemBuilder: (BuildContext c, int i) {
                     final PasswordEntry entry = visible[i];
-                    return NeonCard(
-                      padding: EdgeInsets.zero,
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: AppColors.surfaceHigh,
-                          foregroundColor: AppColors.neonCyan,
-                          child: Text(_initial(entry.title)),
-                        ),
-                        title: Row(
-                          children: <Widget>[
-                            Flexible(
-                              child: Text(
-                                entry.title,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (entry.favorite) ...<Widget>[
-                              const SizedBox(width: 6),
-                              const Icon(
-                                Icons.star,
-                                size: 16,
-                                color: AppColors.warning,
-                              ),
-                            ],
-                          ],
-                        ),
-                        subtitle: entry.username.isEmpty
-                            ? null
-                            : Text(
-                                entry.username,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
-                        trailing: IconButton(
-                          tooltip: 'Copy password',
-                          icon: const Icon(Icons.copy),
-                          onPressed: () => _copy(entry),
-                        ),
-                        onTap: () => _open(entry),
+                    return BrutalTile(
+                      leading: IconBox(text: _initial(entry.title)),
+                      title: entry.title,
+                      titleSuffix: entry.favorite
+                          ? const Icon(Icons.star, size: 16, color: AppColors.warn)
+                          : null,
+                      subtitle: entry.username,
+                      trailing: IconButton(
+                        tooltip: 'Copy password',
+                        icon: const Icon(Icons.copy),
+                        onPressed: () => _copy(entry),
                       ),
+                      onTap: () => _open(entry),
                     );
                   },
                 );
