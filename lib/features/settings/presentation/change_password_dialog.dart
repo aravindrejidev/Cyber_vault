@@ -1,5 +1,4 @@
 import 'package:cyber_vault/core/security/session.dart';
-import 'package:cyber_vault/core/theme/app_theme.dart';
 import 'package:cyber_vault/core/widgets/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,8 +8,7 @@ class ChangePasswordDialog extends ConsumerStatefulWidget {
   const ChangePasswordDialog({super.key});
 
   @override
-  ConsumerState<ChangePasswordDialog> createState() =>
-      _ChangePasswordDialogState();
+  ConsumerState<ChangePasswordDialog> createState() => _ChangePasswordDialogState();
 }
 
 class _ChangePasswordDialogState extends ConsumerState<ChangePasswordDialog> {
@@ -65,9 +63,7 @@ class _ChangePasswordDialogState extends ConsumerState<ChangePasswordDialog> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = e is VaultException
-            ? e.message
-            : 'Could not change the password: $e';
+        _error = e is VaultException ? e.message : 'Could not change the password: $e';
       });
     }
   }
@@ -76,60 +72,54 @@ class _ChangePasswordDialogState extends ConsumerState<ChangePasswordDialog> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: !_busy,
-      child: AlertDialog(
-        title: const Text('Change master password'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              VaultTextField(
-                controller: _oldPassword,
-                label: 'Current password',
-                obscureText: true,
-                enabled: !_busy,
-              ),
-              const SizedBox(height: 12),
-              VaultTextField(
-                controller: _newPassword,
-                label: 'New password',
-                obscureText: true,
-                enabled: !_busy,
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 8),
-              PasswordStrengthMeter(password: _newPassword.text),
-              const SizedBox(height: 12),
-              VaultTextField(
-                controller: _confirm,
-                label: 'Confirm new password',
-                obscureText: true,
-                enabled: !_busy,
-              ),
-              if (_error != null) ...<Widget>[
-                const SizedBox(height: 10),
-                Text(
-                  _error!,
-                  style: const TextStyle(color: AppColors.danger),
-                ),
-              ],
+      child: BrutalDialog(
+        title: 'Change master password',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            VaultTextField(
+              controller: _oldPassword,
+              label: 'Current password',
+              obscureText: true,
+              enabled: !_busy,
+            ),
+            const SizedBox(height: 20),
+            VaultTextField(
+              controller: _newPassword,
+              label: 'New password',
+              obscureText: true,
+              enabled: !_busy,
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 10),
+            PasswordStrengthMeter(password: _newPassword.text),
+            const SizedBox(height: 20),
+            VaultTextField(
+              controller: _confirm,
+              label: 'Confirm new password',
+              obscureText: true,
+              enabled: !_busy,
+            ),
+            if (_error != null) ...<Widget>[
+              const SizedBox(height: 16),
+              ErrorBox(_error!),
             ],
-          ),
+            if (_busy) ...<Widget>[
+              const SizedBox(height: 16),
+              const BrutalProgressBar(),
+            ],
+          ],
         ),
         actions: <Widget>[
-          TextButton(
+          BrutalButton(
+            label: 'Cancel',
+            style: BrutalButtonStyle.outline,
             onPressed: _busy ? null : () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
           ),
-          FilledButton(
+          BrutalButton(
+            label: _busy ? 'Working...' : 'Change',
             onPressed: _busy ? null : _submit,
-            child: _busy
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Change'),
           ),
         ],
       ),
