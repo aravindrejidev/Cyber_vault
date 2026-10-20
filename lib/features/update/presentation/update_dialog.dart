@@ -10,12 +10,6 @@ import 'package:cyber_vault/core/widgets/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-const Color _screenColor = Color(0xFF03060B);
-const TextStyle _buttonText = TextStyle(
-  letterSpacing: 1.6,
-  fontWeight: FontWeight.w700,
-);
-
 Future<void> showUpdateDialog(
   BuildContext context,
   UpdateInfo info,
@@ -178,16 +172,30 @@ class _UpdateDialogState extends State<UpdateDialog> {
 
   List<Widget> _promptActions() {
     return <Widget>[
-      _BigButton(label: 'DOWNLOAD & INSTALL', onPressed: _startDownload),
-      const SizedBox(height: 10),
+      BrutalButton(
+        label: 'Download & install',
+        icon: Icons.download,
+        onPressed: _startDownload,
+      ),
+      const SizedBox(height: 6),
       Row(
         children: <Widget>[
           Expanded(
-            child: _SmallButton(label: "DON'T REMIND", onPressed: _skip),
+            child: BrutalButton(
+              label: "Don't remind",
+              style: BrutalButtonStyle.outline,
+              height: 46,
+              onPressed: _skip,
+            ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
-            child: _SmallButton(label: 'LATER', onPressed: _later),
+            child: BrutalButton(
+              label: 'Later',
+              style: BrutalButtonStyle.outline,
+              height: 46,
+              onPressed: _later,
+            ),
           ),
         ],
       ),
@@ -197,28 +205,30 @@ class _UpdateDialogState extends State<UpdateDialog> {
   List<Widget> _downloadActions() {
     final double? fraction =
         _total > 0 ? (_received / _total).clamp(0.0, 1.0).toDouble() : null;
-    final String percent =
-        fraction == null ? '' : '${(fraction * 100).round()}%  -  ';
+    final String percent = fraction == null ? '' : '${(fraction * 100).round()}%  -  ';
     final String sizes = _total > 0
         ? '${formatBytes(_received)} / ${formatBytes(_total)}'
         : formatBytes(_received);
     return <Widget>[
-      ClipRRect(
-        borderRadius: BorderRadius.circular(6),
-        child: LinearProgressIndicator(value: fraction, minHeight: 10),
-      ),
+      BrutalProgressBar(value: fraction, height: 22),
       const SizedBox(height: 10),
       Text(
-        'Downloading  $percent$sizes',
+        'DOWNLOADING  $percent$sizes',
         textAlign: TextAlign.center,
         style: const TextStyle(
-          color: AppColors.neonGreen,
-          fontFamily: 'monospace',
-          fontSize: 13,
+          color: AppColors.accent,
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.2,
         ),
       ),
       const SizedBox(height: 14),
-      _SmallButton(label: 'CANCEL', onPressed: _cancelDownload),
+      BrutalButton(
+        label: 'Cancel',
+        style: BrutalButtonStyle.outline,
+        height: 46,
+        onPressed: _cancelDownload,
+      ),
     ];
   }
 
@@ -229,11 +239,21 @@ class _UpdateDialogState extends State<UpdateDialog> {
         'Allow it, come back here and tap INSTALL.',
       ),
       const SizedBox(height: 14),
-      _BigButton(label: 'OPEN SETTINGS', onPressed: _openSettings),
-      const SizedBox(height: 10),
-      _SmallButton(label: 'INSTALL', onPressed: _install),
-      const SizedBox(height: 10),
-      _SmallButton(label: 'CLOSE', onPressed: _later),
+      BrutalButton(label: 'Open settings', icon: Icons.settings, onPressed: _openSettings),
+      const SizedBox(height: 6),
+      BrutalButton(
+        label: 'Install',
+        style: BrutalButtonStyle.outline,
+        height: 46,
+        onPressed: _install,
+      ),
+      const SizedBox(height: 6),
+      BrutalButton(
+        label: 'Close',
+        style: BrutalButtonStyle.outline,
+        height: 46,
+        onPressed: _later,
+      ),
     ];
   }
 
@@ -244,78 +264,59 @@ class _UpdateDialogState extends State<UpdateDialog> {
         'Your vault data is kept.',
       ),
       const SizedBox(height: 14),
-      _SmallButton(label: 'INSTALL AGAIN', onPressed: _install),
-      const SizedBox(height: 10),
-      _SmallButton(label: 'CLOSE', onPressed: _later),
+      BrutalButton(label: 'Install again', onPressed: _install),
+      const SizedBox(height: 6),
+      BrutalButton(
+        label: 'Close',
+        style: BrutalButtonStyle.outline,
+        height: 46,
+        onPressed: _later,
+      ),
     ];
   }
 
   List<Widget> _errorActions() {
     return <Widget>[
-      _Message(_error ?? 'Something went wrong.', color: AppColors.danger),
-      const SizedBox(height: 14),
-      _BigButton(label: 'RETRY', onPressed: _retry),
-      const SizedBox(height: 10),
-      _SmallButton(label: 'CLOSE', onPressed: _later),
+      ErrorBox(_error ?? 'Something went wrong.'),
+      const SizedBox(height: 16),
+      BrutalButton(label: 'Retry', icon: Icons.refresh, onPressed: _retry),
+      const SizedBox(height: 6),
+      BrutalButton(
+        label: 'Close',
+        style: BrutalButtonStyle.outline,
+        height: 46,
+        onPressed: _later,
+      ),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
+    final String sizeText = widget.info.apkSize > 0
+        ? 'DOWNLOAD SIZE   ${formatBytes(widget.info.apkSize)}'
+        : 'DOWNLOAD SIZE   UNKNOWN';
     return PopScope(
       canPop: _phase != _Phase.downloading,
       onPopInvokedWithResult: (bool didPop, Object? result) {
         if (!didPop) _cancelDownload();
       },
-      child: Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: AppColors.neonCyan.withAlpha(150),
-                width: 1.2,
-              ),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: AppColors.neonCyan.withAlpha(50),
-                  blurRadius: 30,
-                ),
-              ],
-            ),
-            child: SingleChildScrollView(
-              primary: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  const _PanelHeader(),
-                  const SizedBox(height: 16),
-                  _VersionPanel(
-                    current: AppInfo.version,
-                    next: widget.info.version,
-                  ),
-                  const SizedBox(height: 18),
-                  const _Label("WHAT'S NEW"),
-                  const SizedBox(height: 8),
-                  _NotesBox(text: widget.info.notes),
-                  const SizedBox(height: 14),
-                  _Label(
-                    widget.info.apkSize > 0
-                        ? 'DOWNLOAD SIZE   ${formatBytes(widget.info.apkSize)}'
-                        : 'DOWNLOAD SIZE   UNKNOWN',
-                  ),
-                  const SizedBox(height: 16),
-                  ..._actions(),
-                ],
-              ),
-            ),
-          ),
+      child: BrutalDialog(
+        title: 'Update available',
+        actions: const <Widget>[],
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            _VersionPanel(current: AppInfo.version, next: widget.info.version),
+            const SizedBox(height: 20),
+            const _Label("WHAT'S NEW"),
+            const SizedBox(height: 8),
+            _NotesBox(text: widget.info.notes),
+            const SizedBox(height: 14),
+            _Label(sizeText),
+            const SizedBox(height: 18),
+            ..._actions(),
+          ],
         ),
       ),
     );
@@ -325,45 +326,6 @@ class _UpdateDialogState extends State<UpdateDialog> {
 // ---------------------------------------------------------------------------
 // Small building blocks
 // ---------------------------------------------------------------------------
-
-class _PanelHeader extends StatelessWidget {
-  const _PanelHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        const Expanded(
-          child: Text(
-            'UPDATE AVAILABLE',
-            style: TextStyle(
-              color: AppColors.text,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 2.4,
-            ),
-          ),
-        ),
-        // Glowing status LED.
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.neonGreen,
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: AppColors.neonGreen.withAlpha(170),
-                blurRadius: 10,
-                spreadRadius: 1,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 class _VersionPanel extends StatelessWidget {
   const _VersionPanel({required this.current, required this.next});
@@ -376,9 +338,8 @@ class _VersionPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
       decoration: BoxDecoration(
-        color: _screenColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 2),
+        color: AppColors.panel,
+        border: Border.all(color: AppColors.ink, width: AppStyle.stroke),
       ),
       child: Row(
         children: <Widget>[
@@ -386,15 +347,15 @@ class _VersionPanel extends StatelessWidget {
             child: _VersionColumn(
               label: 'CURRENT',
               value: 'v$current',
-              color: AppColors.neonGreen,
+              color: AppColors.muted,
             ),
           ),
-          const Icon(Icons.arrow_forward, color: AppColors.neonCyan, size: 30),
+          const Icon(Icons.arrow_forward, color: AppColors.accent, size: 32),
           Expanded(
             child: _VersionColumn(
               label: 'NEW',
               value: 'v$next',
-              color: AppColors.neonCyan,
+              color: AppColors.accent,
             ),
           ),
         ],
@@ -424,22 +385,16 @@ class _VersionColumn extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: color.withAlpha(190),
+              color: color,
               fontSize: 12,
-              letterSpacing: 1.4,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 2,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(
-              color: color,
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              shadows: <Shadow>[
-                Shadow(color: color.withAlpha(170), blurRadius: 14),
-              ],
-            ),
+            style: TextStyle(color: color, fontSize: 28, fontWeight: FontWeight.w900),
           ),
         ],
       ),
@@ -459,23 +414,77 @@ class _NotesBox extends StatelessWidget {
       constraints: const BoxConstraints(maxHeight: 220),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _screenColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 2),
+        color: AppColors.panel,
+        border: Border.all(color: AppColors.line, width: AppStyle.stroke),
       ),
       child: SingleChildScrollView(
         primary: false,
-        child: Text(
-          text.isEmpty ? 'No release notes.' : text,
-          style: const TextStyle(
-            color: AppColors.neonGreen,
-            fontFamily: 'monospace',
-            fontSize: 14,
-            height: 1.5,
-          ),
-        ),
+        child: _NotesText(text),
       ),
     );
+  }
+}
+
+/// Release notes as written by the release workflow: short heading lines
+/// ("New", "Fixes") and bullet lines starting with a dot.
+class _NotesText extends StatelessWidget {
+  const _NotesText(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    if (text.isEmpty) {
+      return const Text('No release notes.', style: AppStyle.muted);
+    }
+    final List<Widget> lines = <Widget>[];
+    for (final String raw in text.split('\n')) {
+      final String line = raw.trimRight();
+      if (line.isEmpty) {
+        lines.add(const SizedBox(height: 10));
+      } else if (line.startsWith('•')) {
+        lines.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const Padding(
+                  padding: EdgeInsets.only(top: 6),
+                  child: SizedBox(
+                    width: 8,
+                    height: 8,
+                    child: ColoredBox(color: AppColors.accent),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    line.substring(1).trim(),
+                    style: const TextStyle(fontSize: 14, height: 1.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else if (line.length <= 24) {
+        lines.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(line.toUpperCase(), style: AppStyle.label),
+          ),
+        );
+      } else {
+        lines.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(line, style: const TextStyle(fontSize: 14, height: 1.4)),
+          ),
+        );
+      }
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: lines);
   }
 }
 
@@ -489,9 +498,9 @@ class _Label extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-        color: AppColors.textMuted,
+        color: AppColors.muted,
         fontSize: 12,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         letterSpacing: 1.8,
       ),
     );
@@ -499,60 +508,12 @@ class _Label extends StatelessWidget {
 }
 
 class _Message extends StatelessWidget {
-  const _Message(this.text, {this.color = AppColors.textMuted});
+  const _Message(this.text);
 
   final String text;
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      textAlign: TextAlign.center,
-      style: TextStyle(color: color, fontSize: 13, height: 1.4),
-    );
-  }
-}
-
-class _BigButton extends StatelessWidget {
-  const _BigButton({required this.label, required this.onPressed});
-
-  final String label;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 54,
-      child: FilledButton(
-        onPressed: onPressed,
-        child: Text(label, style: _buttonText),
-      ),
-    );
-  }
-}
-
-class _SmallButton extends StatelessWidget {
-  const _SmallButton({required this.label, required this.onPressed});
-
-  final String label;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 46,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            letterSpacing: 1.2,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
+    return Text(text, textAlign: TextAlign.center, style: AppStyle.muted);
   }
 }
