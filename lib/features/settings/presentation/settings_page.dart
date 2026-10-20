@@ -50,9 +50,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     setState(() => _biometricBusy = true);
     String? error;
     try {
-      error = await ref
-          .read(sessionProvider.notifier)
-          .setBiometricEnabled(enable);
+      error = await ref.read(sessionProvider.notifier).setBiometricEnabled(enable);
     } catch (e) {
       error = 'Could not change biometric unlock: $e';
     }
@@ -85,139 +83,108 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget build(BuildContext context) {
     final SessionState session = ref.watch(sessionProvider);
     final bool canToggle = session.biometricAvailable && !_biometricBusy;
+    final bool updatesOn = _updates.isConfigured;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: const BrutalAppBar(title: 'Settings'),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 20, 12, 28),
         children: <Widget>[
-          const _SectionLabel('Security'),
-          NeonCard(
+          const SectionLabel('Security'),
+          BrutalCard(
             padding: EdgeInsets.zero,
             child: Column(
               children: <Widget>[
-                SwitchListTile(
-                  secondary: const Icon(Icons.fingerprint),
-                  title: const Text('Biometric unlock'),
-                  subtitle: Text(
-                    session.biometricAvailable
-                        ? 'Unlock with fingerprint or face'
-                        : 'No biometrics enrolled on this device',
-                  ),
+                BrutalSwitchTile(
+                  icon: Icons.fingerprint,
+                  title: 'Biometric unlock',
+                  subtitle: session.biometricAvailable
+                      ? 'Unlock with fingerprint or face'
+                      : 'No biometrics enrolled on this device',
                   value: session.biometricEnabled,
                   onChanged: canToggle ? _toggleBiometric : null,
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.password),
-                  title: const Text('Change master password'),
+                const Divider(),
+                _SettingTile(
+                  icon: Icons.password,
+                  title: 'Change master password',
                   onTap: _changePassword,
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.lock_outline),
-                  title: const Text('Lock now'),
+                const Divider(),
+                _SettingTile(
+                  icon: Icons.lock_outline,
+                  title: 'Lock now',
                   onTap: () => ref.read(sessionProvider.notifier).lock(),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
-          const _SectionLabel('Updates'),
-          NeonCard(
+          const SizedBox(height: 28),
+          const SectionLabel('Updates'),
+          BrutalCard(
             padding: EdgeInsets.zero,
             child: Column(
               children: <Widget>[
-                ListTile(
-                  leading: const Icon(Icons.info_outline),
-                  title: const Text('Version'),
-                  subtitle: Text(
-                    _updates.isConfigured
-                        ? 'v${AppInfo.version}'
-                        : 'v${AppInfo.version} (updates are off in this build)',
-                  ),
+                _SettingTile(
+                  icon: Icons.info_outline,
+                  title: 'Version',
+                  subtitle: updatesOn
+                      ? 'v${AppInfo.version}'
+                      : 'v${AppInfo.version} (updates are off in this build)',
                 ),
-                const Divider(height: 1),
-                SwitchListTile(
-                  secondary: const Icon(Icons.system_update_alt),
-                  title: const Text('Check on startup'),
-                  subtitle: const Text(
-                    'Only asks GitHub whether a new release exists',
-                  ),
+                const Divider(),
+                BrutalSwitchTile(
+                  icon: Icons.system_update_alt,
+                  title: 'Check on startup',
+                  subtitle: 'Only asks GitHub whether a new release exists',
                   value: _autoCheck,
-                  onChanged: _updates.isConfigured ? _toggleAutoCheck : null,
+                  onChanged: updatesOn ? _toggleAutoCheck : null,
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: _checking
+                const Divider(),
+                _SettingTile(
+                  icon: Icons.refresh,
+                  title: 'Check for updates now',
+                  trailing: _checking
                       ? const SizedBox(
-                          width: 24,
-                          height: 24,
+                          width: 20,
+                          height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.refresh),
-                  title: const Text('Check for updates now'),
-                  enabled: _updates.isConfigured && !_checking,
-                  onTap: _checkNow,
+                      : null,
+                  onTap: (updatesOn && !_checking) ? _checkNow : null,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
-          const _SectionLabel('How your data is protected'),
-          const NeonCard(
+          const SizedBox(height: 28),
+          const SectionLabel('Protection'),
+          const BrutalCard(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
+                _InfoRow('Zero-knowledge: the master password is never stored.'),
+                _InfoRow('Argon2id key derivation, AES-256-GCM encryption.'),
+                _InfoRow('Passwords and notes live in a SQLCipher (AES-256) database.'),
+                _InfoRow('Documents are encrypted on disk and opened from memory only.'),
+                _InfoRow('Screenshots and app-switcher previews are blocked.'),
+                _InfoRow('Auto-lock: 30 s in background, 3 min without touch.'),
+                _InfoRow('Copied passwords are cleared from the clipboard after 30 s.'),
                 _InfoRow(
-                  icon: Icons.visibility_off_outlined,
-                  text: 'Zero-knowledge: the master password is never stored.',
-                ),
-                _InfoRow(
-                  icon: Icons.key_outlined,
-                  text: 'Argon2id key derivation, AES-256-GCM encryption.',
-                ),
-                _InfoRow(
-                  icon: Icons.storage_outlined,
-                  text: 'Passwords and notes live in a SQLCipher (AES-256) database.',
-                ),
-                _InfoRow(
-                  icon: Icons.folder_outlined,
-                  text: 'Documents are encrypted on disk and opened from memory only.',
-                ),
-                _InfoRow(
-                  icon: Icons.phone_android_outlined,
-                  text: 'Screenshots and app-switcher previews are blocked.',
-                ),
-                _InfoRow(
-                  icon: Icons.timer_outlined,
-                  text: 'Auto-lock: 30 s in background, 3 min without touch.',
-                ),
-                _InfoRow(
-                  icon: Icons.content_paste,
-                  text: 'Copied passwords are cleared from the clipboard after 30 s.',
-                ),
-                _InfoRow(
-                  icon: Icons.wifi_off_outlined,
-                  text: 'Your data never leaves the device. The network is used only to check and download app updates from GitHub.',
+                  'Your data never leaves the device. The network is used only to check and download app updates from GitHub.',
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
-          const _SectionLabel('Danger zone'),
-          NeonCard(
+          const SizedBox(height: 28),
+          const SectionLabel('Danger zone'),
+          BrutalCard(
             padding: EdgeInsets.zero,
-            child: ListTile(
-              leading: const Icon(
-                Icons.delete_forever_outlined,
-                color: AppColors.danger,
-              ),
-              title: const Text(
-                'Erase vault',
-                style: TextStyle(color: AppColors.danger),
-              ),
-              subtitle: const Text('Delete all data on this device'),
+            borderColor: AppColors.danger,
+            shadowColor: AppColors.danger,
+            child: _SettingTile(
+              icon: Icons.delete_forever_outlined,
+              title: 'Erase vault',
+              subtitle: 'Delete all data on this device',
+              danger: true,
               onTap: _erase,
             ),
           ),
@@ -227,22 +194,58 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 }
 
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
+class _SettingTile extends StatelessWidget {
+  const _SettingTile({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.onTap,
+    this.trailing,
+    this.danger = false,
+  });
 
-  final String text;
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback? onTap;
+  final Widget? trailing;
+  final bool danger;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(
-        text.toUpperCase(),
-        style: const TextStyle(
-          color: AppColors.neonCyan,
-          fontSize: 12,
-          letterSpacing: 1.4,
-          fontWeight: FontWeight.w600,
+    final bool enabled = onTap != null;
+    Color tone = enabled ? AppColors.ink : AppColors.muted;
+    if (danger) tone = AppColors.danger;
+    final String? sub = subtitle;
+    final Widget? end = trailing ?? (enabled ? Icon(Icons.chevron_right, color: tone) : null);
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        child: Row(
+          children: <Widget>[
+            Icon(icon, color: tone, size: 22),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    title,
+                    style: TextStyle(color: tone, fontSize: 15, fontWeight: FontWeight.w800),
+                  ),
+                  if (sub != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(sub, style: AppStyle.muted),
+                    ),
+                ],
+              ),
+            ),
+            if (end != null) end,
+          ],
         ),
       ),
     );
@@ -250,9 +253,8 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.text});
+  const _InfoRow(this.text);
 
-  final IconData icon;
   final String text;
 
   @override
@@ -262,14 +264,12 @@ class _InfoRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(icon, size: 20, color: AppColors.neonCyan),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-            ),
+          Padding(
+            padding: const EdgeInsets.only(top: 5),
+            child: Container(width: 8, height: 8, color: AppColors.accent),
           ),
+          const SizedBox(width: 12),
+          Expanded(child: Text(text, style: AppStyle.muted)),
         ],
       ),
     );
